@@ -28,10 +28,8 @@ def fetch_session_counts(haproxy_stats_urls):
             current[proxy_name] += int(s_cur)
             limit[proxy_name] += int(s_lim)
 
-    ret = []
-    for pool, limit in limit.most_common():
-        ret.append((pool, current[pool], limit))
-    return ret
+    return [(pool, current[pool], capacity)
+            for pool, capacity in limit.most_common()]
 
 
 def notify_graphite(usage):
