@@ -84,8 +84,11 @@ def _parse_addr(addr):
     return host, int(port_str)
 
 class Graphite(object):
+    MAX_QUEUE_SIZE = 1000
+
     def __init__(self, address):
         self.address = address
+        self.send_queue = []
 
     def _send_message(self, msg):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,8 +101,24 @@ class Graphite(object):
         timestamp = str(time.time())
         for key, value in items.iteritems():
             messages.append(" ".join((key, str(value), timestamp)))
-        if messages:
-            self._send_message("\n".join(messages))
+        self.send_queue.extend(messages)
+        if self.send_queue:
+            try:
+                self._send_message("\n".join(self.send_queue))
+                del self.send_queue[:]
+            except socket.error as e:
+                logging.warning(
+                    "Error while flushing to graphite. Queue size: %d",
+                    len(self.send_queue)
+                )
+            finally:
+                if len(self.send_queue) > Graphite.MAX_QUEUE_SIZE:
+                    logging.warning(
+                        "Discarding %d messages",
+                        len(self.send_queue) - Graphite.MAX_QUEUE_SIZE
+                    )
+                    self.send_queue = self.send_queue[-Graphite.MAX_QUEUE_SIZE:]
+
 
 def configure_graphite(config):
     global graphite
