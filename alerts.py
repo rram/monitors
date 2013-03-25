@@ -85,6 +85,15 @@ def _parse_addr(addr):
     return host, int(port_str)
 
 class Graphite(object):
+    """Send data to graphite in a fault-tolerant manner.
+
+    Provides a single public method - send_values() - which adds to and
+    flushes an internal queue of messages. Should delivery to graphite fail,
+    messages are queued until the next invocation of send_values(). Up to
+    MAX_QUEUE_SIZE messages are kept, after which the oldest are dropped. This
+    class is not thread-safe.
+
+    """
     MAX_QUEUE_SIZE = 1000
 
     def __init__(self, address):
