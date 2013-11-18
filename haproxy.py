@@ -29,7 +29,7 @@ def fetch_queue_lengths_by_pool(haproxy_stats_urls):
                 pools[proxy_name] += int(queue_length)
         except urllib2.URLError:
             host = urlparse.urlparse(url).hostname
-            alerts.harold.alert(host, "haproxy is down")
+            alerts.harold.alert(host, "couldn't connect to haproxy")
 
     return pools
 
