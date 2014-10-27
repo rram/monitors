@@ -16,16 +16,13 @@ CONFIG_SECTION = "haproxy"
 def retry(times=3):
     def wrap(fn):
         def _retry(*args, **kwargs):
-            fail_count = 0
-            while 1:
+            for i in xrange(times-1):
                 try:
                     return fn(*args, **kwargs)
                 except Exception as e:
-                    fail_count += 1
-                    if fail_count >= times:
-                        raise e
-                    else:
-                        time.sleep(1)
+                    time.sleep(1)
+            # last time, return or bail on the exception
+            return fn(*args, **kwargs)
         return _retry
     return wrap
 urllib2.urlopen = retry()(urllib2.urlopen)
