@@ -13,6 +13,24 @@ TIMEOUT = 6  # seconds
 CONFIG_SECTION = "haproxy"
 
 
+def retry(times=3):
+    def wrap(fn):
+        def _retry(*args, **kwargs):
+            fail_count = 0
+            while 1:
+                try:
+                    return fn(*args, **kwargs)
+                except Exception as e:
+                    fail_count += 1
+                    if fail_count >= times:
+                        raise e
+                    else:
+                        time.sleep(1)
+        return _retry
+    return wrap
+urllib2.urlopen = retry()(urllib2.urlopen)
+
+
 def fetch_queue_lengths_by_pool(haproxy_stats_urls):
     pools = collections.Counter()
 
